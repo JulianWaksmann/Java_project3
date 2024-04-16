@@ -1,0 +1,151 @@
+package TP1_2048;
+
+import java.awt.Dimension;
+import java.awt.Point;
+import java.awt.GridLayout;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+
+import javax.swing.JLayeredPane;
+import javax.swing.JPanel;
+
+public class TableroPanel extends JPanel {
+    private static final long serialVersionUID = 1L;
+    private int tamanioTablero;
+    private int margen = 4; 
+    private FichaPanel[][] fichas;
+    private JLayeredPane panelSuperpuesto; 
+
+    public TableroPanel() {
+    	panelSuperpuesto = new JLayeredPane();
+    	panelSuperpuesto.setLayout(null); // Desactivar el layout manager predeterminado
+        add(panelSuperpuesto);
+    	
+        addComponentListener(new ComponentAdapter() {
+            @Override
+            public void componentResized(ComponentEvent e) {
+                resize();
+            }
+        });
+    }
+    
+    @Override
+    public Dimension getPreferredSize() {
+        Dimension dimension = super.getPreferredSize();
+        int size = Math.min(dimension.width, dimension.height);
+        return new Dimension(size, size);
+    }
+    
+
+    private void crearFichas() {
+        fichas = new FichaPanel[tamanioTablero][tamanioTablero];
+        for (int i = 0; i < tamanioTablero; i++) {
+            for (int j = 0; j < tamanioTablero; j++) {
+                fichas[i][j] = new FichaPanel();
+                this.add(fichas[i][j]);
+            }
+        }
+    }
+
+    private void resize() {
+    	if (this.tamanioTablero > 0) {
+	        int anchoContenedor = getWidth();
+	        int altoContenedor = getHeight();
+	        int anchoFicha = (anchoContenedor - (tamanioTablero - 1) * margen) / tamanioTablero - margen / 2;
+	        int altoFicha = (altoContenedor - (tamanioTablero - 1) * margen) / tamanioTablero - margen / 2;
+	        
+	        //int size = Math.min(anchoContenedor, altoContenedor);
+	        //setSize(size, size);
+	        
+	        for (int i = 0; i < tamanioTablero; i++) {
+	            for (int j = 0; j < tamanioTablero; j++) {
+	                Dimension panelDimension = new Dimension(anchoFicha, altoFicha);
+	                fichas[i][j].setPreferredSize(panelDimension);
+	                fichas[i][j].setMinimumSize(panelDimension);
+	                fichas[i][j].setMaximumSize(panelDimension);
+	            }
+	        }
+    	}
+
+        revalidate();
+        repaint();
+    }
+
+    public void setTamanioTablero(int tamanioTablero) {
+    	this.tamanioTablero = tamanioTablero;
+        this.removeAll(); // Elimina los paneles anteriores
+        this.setLayout(new GridLayout(tamanioTablero, tamanioTablero, margen, margen));
+        crearFichas();
+        revalidate();
+        repaint();
+    }
+    
+    public void RealizarPasoMovimiento(PasoMovimiento movimiento) {
+    	FichaPanel tmpFicha = new FichaPanel();
+    	FichaPanel fichaOrigen = this.fichas[movimiento.getOrigen().getY()][movimiento.getOrigen().getX()];
+    	FichaPanel fichaDestino = this.fichas[movimiento.getDestino().getY()][movimiento.getDestino().getX()];
+    	
+    	//tmpFicha.setValor(fichaOrigen.getValor());
+    	tmpFicha.setValor(2048);
+    	//this.panelSuperpuesto.add(tmpFicha);
+    	this.add(tmpFicha);
+    	tmpFicha.setBounds(fichaOrigen.getBounds());
+    	
+    	int xDesde;
+    	int xHasta;
+    	int yDesde;
+    	int yHasta;
+    	
+    	Point pOrigen = fichaOrigen.getLocation(); 
+    	Point pDestino = fichaDestino.getLocation(); 
+    	
+    	if (pOrigen.x < pDestino.x) {
+    		xDesde = pOrigen.x;
+    		xHasta = pDestino.x;
+    	}
+    	else
+    	{
+    		xDesde = pDestino.x;
+    		xHasta = pOrigen.x;
+    	}
+    	
+    	if (pOrigen.y < pDestino.y) {
+    		yDesde = pOrigen.y;
+    		yHasta = pDestino.y;
+    	}
+    	else
+    	{
+    		yDesde = pDestino.y;
+    		yHasta = pOrigen.y;
+    	}
+    	tmpFicha.setVisible(true);
+    	
+    	for (int x = xDesde; x <= xHasta; x++) {
+    		for (int y = yDesde; y <= yHasta; y++) {
+    			Point np = new Point(x, y);
+    			tmpFicha.setLocation(np);
+    			//try {
+    			//	Thread.sleep(10);
+    			//}
+    			//catch (Exception ex) {
+    			//	
+    			//}
+    		}
+    	}
+    	tmpFicha.setVisible(false);
+    	this.remove(tmpFicha);
+    	
+    	
+    	
+    	
+    	
+    	//panelSuperpuesto.add(movimientoPanel, JLayeredPane.DRAG_LAYER); // Agregar el panel al JLayeredPane
+
+    	
+    }
+    
+    public void setValorFicha(PasoMovimiento movimiento) {
+    	fichas[movimiento.getDestino().getY()][movimiento.getDestino().getX()].setValor(movimiento.getOrigen().getValor());
+    }
+}
+

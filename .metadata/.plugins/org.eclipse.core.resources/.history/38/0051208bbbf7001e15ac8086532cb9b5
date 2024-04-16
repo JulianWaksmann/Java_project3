@@ -1,0 +1,173 @@
+package TP1_2048;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+public class FichaPanel extends JPanel {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int valor;
+	private String text;
+    private Color foregroundColor;
+    private Color backgroundColor;
+    private Font font;
+    private BufferedImage bufferImage;
+    private int alignment;
+    
+    //cada fila de la matriz contiene el color de frente y fondo de cada ficha
+    private Color[][] coloresFicha = new Color[][] {
+    	{new Color(238, 228, 218), new Color(238, 228, 218)},	//Colores del 0 
+    	{new Color(119, 110, 101), new Color(238, 228, 218)},	//Colores del 2 
+    	{new Color(119, 110, 101), new Color(237, 224, 200)},	//Colores del 4
+    	{new Color(249, 246, 242), new Color(242, 177, 121)},	//colores del 8
+        {new Color(249, 246, 242), new Color(245, 149, 99)},	//colores del 16
+       	{new Color(249, 246, 242), new Color(246, 124, 95)},	//colores del 32
+       	{new Color(249, 246, 242), new Color(246, 94, 59)},		//colores del 64
+       	{new Color(249, 246, 242), new Color(237, 207, 114)},	//colores del 128
+       	{new Color(249, 246, 242), new Color(237, 204, 97)},	//colores del 256
+       	{new Color(249, 246, 242), new Color(237, 200, 80)},	//colores del 512
+       	{new Color(249, 246, 242), new Color(237, 197, 63)},	//colores del 1024
+       	{new Color(249, 246, 242), new Color(237, 194, 46)}		//colores del 2048
+    };
+
+    public static final int ALIGN_LEFT = 0;
+    public static final int ALIGN_CENTER = 1;
+    public static final int ALIGN_RIGHT = 2;
+
+    public FichaPanel() {
+        this(0 , new Font("Arial", Font.PLAIN, 12));
+    }
+    
+    public FichaPanel(Font font) {
+        this(0 , font);
+    }
+
+    public FichaPanel(int valor, Font font) {
+        this.font = font;
+        this.alignment = ALIGN_CENTER;
+        setValor(valor);
+    }
+    
+    public void setValor(int valor) {
+    	this.text = String.format("%d", valor);
+    	Color[] coloresFicha = obetenerColoresFicha();
+    	this.foregroundColor = coloresFicha[0];
+    	this.backgroundColor = coloresFicha[1];
+        redrawBuffer();
+        repaint();
+    }
+
+    /*
+    public void setText(String text, Color foregroundColor, Color backgroundColor, Font font, int alignment) {
+        this.text = text;
+        this.foregroundColor = foregroundColor;
+        this.backgroundColor = backgroundColor;
+        this.font = font;
+        this.alignment = alignment;
+        redrawBuffer();
+        repaint();
+    }*/
+
+    private void redrawBuffer() {
+        if (getWidth() <= 0 || getHeight() <= 0) return;
+        bufferImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = bufferImage.createGraphics();
+        drawText(g2d);
+        g2d.dispose();
+    }
+
+    private void drawText(Graphics2D g2d) {
+        // Fondo
+        g2d.setColor(backgroundColor);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+
+        // Texto
+        g2d.setColor(foregroundColor);
+
+        // Calcular el tamaño óptimo del fuente para que el texto quepa en una sola línea
+        int fontSize = 1;
+        Font newFont = font;
+        while (true) {
+            newFont = font.deriveFont(Font.PLAIN, fontSize);
+            g2d.setFont(newFont);
+            FontMetrics fontMetrics = g2d.getFontMetrics();
+            Rectangle2D stringBounds = fontMetrics.getStringBounds(text, g2d);
+            if (stringBounds.getWidth() >= getWidth() || stringBounds.getHeight() >= getHeight()) {
+                break;
+            }
+            fontSize++;
+        }
+
+        // Calcular la posición del texto basado en la alineación
+        FontMetrics fontMetrics = g2d.getFontMetrics();
+        Rectangle2D stringBounds = fontMetrics.getStringBounds(text, g2d);
+        int x = 0;
+        if (alignment == ALIGN_CENTER) {
+            x = (getWidth() - (int) stringBounds.getWidth()) / 2;
+        } else if (alignment == ALIGN_RIGHT) {
+            x = getWidth() - (int) stringBounds.getWidth();
+        }
+        int y = (getHeight() + fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
+
+        // Dibujar el texto
+        g2d.drawString(text, x, y);
+    }
+
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        if (bufferImage == null || bufferImage.getWidth() != getWidth() || bufferImage.getHeight() != getHeight()) {
+            redrawBuffer();
+        }
+
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.drawImage(bufferImage, 0, 0, null);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(200, 50); // Dimension por defecto
+    }
+    
+    
+    private Color[] obetenerColoresFicha() {
+    	return this.coloresFicha[obtenerIndiceColores()];
+    }
+    
+    private int obtenerIndiceColores() {
+        int exponente = 0;
+        int i = this.valor;
+        while (i > 1) {
+            i >>= 1; // Desplaza bits a la derecha para dividir x por 2
+            exponente++;
+        }
+        
+        return exponente;
+    }
+    
+    
+    /*
+    private Color[] generarColoresFicha() {
+        // Utiliza el valor de potenciaDeDos como semilla para el generador de números aleatorios
+        long semilla = (long) this.valor * 2654435761L; // Una constante arbitraria
+        Color colorFondo = generarColorHash(semilla);
+        Color colorFrente = generarColorHash(semilla + 1); // Incrementa la semilla para obtener un color diferente
+        return new Color[] {colorFondo, colorFrente};
+    }
+
+    public static Color generarColorHash(long seed) {
+        // Genera un color basado en una función de hash simple
+        int r = (int) (Math.abs(seed * 1103515245 + 12345) % 256);
+        int g = (int) (Math.abs(seed * 1103515245 + 12345) % 256);
+        int b = (int) (Math.abs(seed * 1103515245 + 12345) % 256);
+        return new Color(r, g, b);
+    }*/
+    
+}

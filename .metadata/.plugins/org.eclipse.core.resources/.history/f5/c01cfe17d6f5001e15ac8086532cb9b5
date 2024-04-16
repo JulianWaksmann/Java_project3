@@ -1,0 +1,95 @@
+package TP1_2048;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.font.FontRenderContext;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+public class FichaPanel extends JPanel {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private String text;
+    private Color foregroundColor;
+    private Color backgroundColor;
+    private Font font;
+    private BufferedImage bufferImage;
+    private int alignment;
+
+    public static final int ALIGN_LEFT = 0;
+    public static final int ALIGN_CENTER = 1;
+    public static final int ALIGN_RIGHT = 2;
+
+    public FichaPanel() {
+        this("", Color.BLACK, Color.WHITE, new Font("Arial", Font.PLAIN, 12), ALIGN_LEFT);
+    }
+
+    public FichaPanel(String text, Color foregroundColor, Color backgroundColor, Font font, int alignment) {
+        this.text = text;
+        this.foregroundColor = foregroundColor;
+        this.backgroundColor = backgroundColor;
+        this.font = font;
+        this.alignment = alignment;
+    }
+
+    public void setText(String text, Color foregroundColor, Color backgroundColor, Font font, int alignment) {
+        this.text = text;
+        this.foregroundColor = foregroundColor;
+        this.backgroundColor = backgroundColor;
+        this.font = font;
+        this.alignment = alignment;
+        redrawBuffer();
+        repaint();
+    }
+
+    private void redrawBuffer() {
+        if (getWidth() <= 0 || getHeight() <= 0) return;
+        bufferImage = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = bufferImage.createGraphics();
+        drawText(g2d);
+        g2d.dispose();
+    }
+
+    private void drawText(Graphics2D g2d) {
+        // Fondo
+        g2d.setColor(backgroundColor);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
+
+        // Texto
+        g2d.setColor(foregroundColor);
+        g2d.setFont(font);
+
+        FontMetrics fontMetrics = g2d.getFontMetrics();
+        Rectangle2D stringBounds = fontMetrics.getStringBounds(text, g2d);
+
+        int x = 0;
+        if (alignment == ALIGN_CENTER) {
+            x = (getWidth() - (int) stringBounds.getWidth()) / 2;
+        } else if (alignment == ALIGN_RIGHT) {
+            x = getWidth() - (int) stringBounds.getWidth();
+        }
+
+        int y = (getHeight() + fontMetrics.getAscent() - fontMetrics.getDescent()) / 2;
+
+        g2d.drawString(text, x, y);
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+
+        if (bufferImage == null || bufferImage.getWidth() != getWidth() || bufferImage.getHeight() != getHeight()) {
+            redrawBuffer();
+        }
+
+        Graphics2D g2d = (Graphics2D) g;
+        g2d.drawImage(bufferImage, 0, 0, null);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        return new Dimension(200, 50); // Dimension por defecto
+    }
+}

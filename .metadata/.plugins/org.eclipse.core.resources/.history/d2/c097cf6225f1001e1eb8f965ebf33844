@@ -1,0 +1,8 @@
+package TP1_2048;
+
+public interface IUIJuego {
+	
+	void AgregarObservador(IObservadorMotorJuego observador);
+	void RemoverObservador(IObservadorMotorJuego observador);
+
+}

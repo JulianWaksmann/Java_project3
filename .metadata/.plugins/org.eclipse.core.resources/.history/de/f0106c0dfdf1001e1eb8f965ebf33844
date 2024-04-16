@@ -1,0 +1,9 @@
+package TP1_2048;
+
+public class PasoMovimiento {
+	public PasoMovimiento(Celda origen, Celda destino) {
+		
+	}
+
+	
+}

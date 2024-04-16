@@ -1,0 +1,129 @@
+package TP1_2048;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.geom.Rectangle2D;
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class Odometer2 extends JPanel {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int numberOfDigits;
+    private int[] currentValues;
+    private int[] targetValues;
+    private Timer timer;
+    private int animationSpeed;
+    private int digitWidth;
+    private int digitHeight;
+    private Font digitFont;
+
+    public Odometer2(int numberOfDigits, int animationSpeed) {
+        this.numberOfDigits = numberOfDigits;
+        this.animationSpeed = animationSpeed;
+        this.currentValues = new int[numberOfDigits];
+        this.targetValues = new int[numberOfDigits];
+
+        setLayout(new GridLayout(1, numberOfDigits));
+        for (int i = 0; i < numberOfDigits; i++) {
+            DigitPanel digitPanel = new DigitPanel();
+            add(digitPanel);
+        }
+
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new OdometerTask(), 0, animationSpeed);
+    }
+
+    public void setValue(int value) {
+        String strValue = String.valueOf(value);
+        int length = strValue.length();
+
+        for (int i = 0; i < numberOfDigits; i++) {
+            if (numberOfDigits - i <= length) {
+                targetValues[i] = Character.getNumericValue(strValue.charAt(length - numberOfDigits + i));
+            } else {
+                targetValues[i] = 0;
+            }
+        }
+    }
+
+    private class OdometerTask extends TimerTask {
+        @Override
+        public void run() {
+            for (int i = 0; i < numberOfDigits; i++) {
+                if (currentValues[i] != targetValues[i]) {
+                    if (currentValues[i] < 9) {
+                        currentValues[i]++;
+                    } else {
+                        currentValues[i] = 0;
+                    }
+                }
+            }
+            repaint();
+        }
+    }
+
+    private class DigitPanel extends JPanel {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		public DigitPanel() {
+            setPreferredSize(new Dimension(40, 60)); // Tamaño inicial
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g.create();
+
+            int digit = getParent().getComponentZOrder(this);
+            int value = currentValues[digit];
+
+            // Clear background
+            g2d.setColor(Color.BLACK);
+            g2d.fillRect(0, 0, getWidth(), getHeight());
+
+            // Draw current value
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(digitFont);
+            String valueStr = String.valueOf(value);
+            FontMetrics fontMetrics = g2d.getFontMetrics();
+            Rectangle2D stringBounds = fontMetrics.getStringBounds(valueStr, g2d);
+            int x = (int) ((getWidth() - stringBounds.getWidth()) / 2);
+            int y = (int) ((getHeight() + stringBounds.getHeight()) / 2);
+            g2d.drawString(valueStr, x, y);
+
+            g2d.dispose();
+        }
+        
+        @Override
+        public Dimension getPreferredSize() {
+            return new Dimension(digitWidth, digitHeight);
+        }
+    }
+
+    @Override
+    public void setFont(Font font) {
+        super.setFont(font);
+        updateDigitFont();
+    }
+
+    @Override
+    public void setPreferredSize(Dimension preferredSize) {
+        super.setPreferredSize(preferredSize);
+        updateDigitSize();
+    }
+
+    private void updateDigitFont() {
+        digitFont = getFont().deriveFont(Font.BOLD, getHeight() * 0.8f);
+    }
+
+    private void updateDigitSize() {
+        digitWidth = (int) (getPreferredSize().getWidth() / numberOfDigits);
+        digitHeight = getPreferredSize().height;
+    }
+}

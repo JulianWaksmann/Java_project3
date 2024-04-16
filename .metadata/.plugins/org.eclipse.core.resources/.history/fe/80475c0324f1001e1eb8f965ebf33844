@@ -1,0 +1,184 @@
+package TP1_2048;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+//Interfaz funcional para representar el método a ejecutar en los observadores
+@FunctionalInterface
+interface AccionObservador {
+ void ejecutar(IObservadorJuego observador);
+}
+
+
+public class MotorJuego implements IMotorJuego{
+	
+	int[][] tablero;
+	int probabilidadDelDos;
+	int tamanioTablero;
+	private List<IObservadorJuego> observadores;
+	
+	public MotorJuego() {
+		observadores = new ArrayList<IObservadorJuego>();
+	}
+
+	@Override
+	public void NuevoJuego(int tamanioTablero, int probabilidadDelDos) {
+		this.tamanioTablero = tamanioTablero;
+		this.probabilidadDelDos = probabilidadDelDos;
+		iniciarJuego();
+		
+	}
+
+	@Override
+	public void Mover(Direccion direccion) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void AgregarObservador(IObservadorJuego observador) {
+		observadores.add(observador);
+	}
+
+	@Override
+	public void RemoverObservador(IObservadorJuego observador) {
+		observadores.remove(observador);
+	}
+	
+	
+	//metodos privados
+	private void iniciarJuego()
+	{
+		//genera un nuevo tablero vacio
+		tablero = new int[tamanioTablero][tamanioTablero];
+		//avisa a los observadores que hay un nuevo tablero
+		crearTablero(tablero);
+		
+		//Genera las primeras dos celdas
+		
+		//Primeera celda
+		//obtiene una nueva celda para el inicio del juego
+		Celda nuevaCelda = obtenerNuevaCelda();
+		tablero[nuevaCelda.y][nuevaCelda.x] = nuevaCelda.valor;
+		
+		//avisa a los observadores que hay un nuevo movimiento en el tablero
+		PasoMovimiento pasoNuevaCelda = new PasoMovimiento(nuevaCelda, nuevaCelda);
+		realizarPasoMovimiento(pasoNuevaCelda);
+		
+		//segunda celda
+		nuevaCelda = obtenerNuevaCelda();
+		tablero[nuevaCelda.y][nuevaCelda.x] = nuevaCelda.valor;
+		
+		//avisa a los observadores que hay un nuevo movimiento en el tablero
+		pasoNuevaCelda = new PasoMovimiento(nuevaCelda, nuevaCelda);
+		realizarPasoMovimiento(pasoNuevaCelda);
+
+	}
+	
+	//obtener una nueva celda
+	private Celda obtenerNuevaCelda(){
+		Celda nuevaCelda = obtenerCeldaVacia();
+		//si no puede obtener una celda vacia es porque perdio
+		if (nuevaCelda.x != 0 || nuevaCelda.y != 0) {
+			nuevaCelda.valor = obtenernuevoValorCelda();
+		}
+		return nuevaCelda;
+	}
+	
+	private Celda obtenerCeldaVacia() {
+		Celda celdaLibre = new Celda();
+		int x;
+		int y = 0;
+		while (y < tablero.length && celdaLibre.x != 0) {
+			x = 0;
+			while (x < tablero.length && celdaLibre.x != 0) {
+				if (tablero[y][x] == 0) {
+					celdaLibre.x = x;
+					celdaLibre.y = y;
+				}
+				x++;
+			}
+			y++;
+		}
+		
+		return celdaLibre;
+	}
+	
+	private int obtenernuevoValorCelda() {
+		final Random random = new Random();
+
+		//numero aleatorio entre 1 y 100
+		int numeroAleatorio = random.nextInt(100) + 1;
+
+        if (numeroAleatorio <= this.probabilidadDelDos) {
+            return 2;
+        } else {
+            return 4;
+        }
+	}
+	
+	 
+	
+	
+	
+	
+	
+	/*********************************************
+	 * Metodos genericos de llamada a observador *
+	 *********************************************/
+	// Ejecutar una acción en todos los observadores utilizando reflection
+    public void ejecutarEnObservadores(String nombreMetodo, Object... args) {
+        for (IObservadorJuego observador : observadores) {
+            try {
+                Method metodo = IObservadorJuego.class.getMethod(nombreMetodo, obtenerTiposArgumentos(args));
+                metodo.invoke(observador, args);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Obtener los tipos de los argumentos
+    private Class<?>[] obtenerTiposArgumentos(Object... args) {
+        Class<?>[] tipos = new Class[args.length];
+        for (int i = 0; i < args.length; i++) {
+            tipos[i] = args[i].getClass();
+        }
+        return tipos;
+    }
+
+    // Ejecutar una acción en todos los observadores
+    public void ejecutarEnObservadores(AccionObservador accion) {
+        for (IObservadorJuego observador : observadores) {
+            accion.ejecutar(observador);
+        }
+    }
+    
+ // Crear tablero en todos los observadores
+    public void crearTablero(int[][] tablero) {
+        ejecutarEnObservadores(observador -> observador.CrearTablero(tablero));
+    }
+
+    // Realizar paso de movimiento en todos los observadores
+    public void realizarPasoMovimiento(PasoMovimiento movimiento) {
+        ejecutarEnObservadores(observador -> observador.RealizarPasoMovimiento(movimiento));
+    }
+
+    // Actualizar puntos en todos los observadores
+    public void actualizarPuntos(int puntos) {
+        ejecutarEnObservadores(observador -> observador.ActualizarPuntos(puntos));
+    }
+
+    // Indicar que se perdio en todos los observadores
+    public void perdio() {
+        ejecutarEnObservadores(observador -> observador.Perdio());
+    }
+
+    // Indicar que se gano en todos los observadores
+    public void gano() {
+        ejecutarEnObservadores(observador -> observador.Gano());
+    }
+
+}

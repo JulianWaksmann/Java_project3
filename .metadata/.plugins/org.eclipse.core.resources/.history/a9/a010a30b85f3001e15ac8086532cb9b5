@@ -1,0 +1,265 @@
+package TP1_2048;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+
+//Interfaz funcional para representar el método a ejecutar en los observadores
+@FunctionalInterface
+interface AccionObservadorMotor {
+ void ejecutar(IObservadorMotorJuego observador);
+}
+
+
+public class MotorJuego implements IMotorJuego, IObservadorUIJuego{
+	
+	int[][] tablero;
+	int probabilidadDelDos;
+	int tamanioTablero;
+	private List<IObservadorMotorJuego> observadores;
+	
+	public MotorJuego() {
+		observadores = new ArrayList<IObservadorMotorJuego>();
+	}
+
+	@Override
+	public void NuevoJuego(int tamanioTablero, int probabilidadDelDos) {
+		this.tamanioTablero = tamanioTablero;
+		this.probabilidadDelDos = probabilidadDelDos;
+		iniciarJuego();
+		
+	}
+
+	@Override
+	public void Mover(Direccion direccion) {
+		switch(direccion) {
+		case ARRIBA:
+			moverArriba();
+			break;
+		case DERECHA:
+			moverDerecha()
+			break;
+		case ABAJO:
+			moverAbajo();
+			break;
+		case IZQUIERDA:
+			mopverIzquierda:
+		}
+	}
+
+	@Override
+	public void AgregarObservador(IObservadorMotorJuego observador) {
+		observadores.add(observador);
+	}
+
+	@Override
+	public void RemoverObservador(IObservadorMotorJuego observador) {
+		observadores.remove(observador);
+	}
+	
+	
+	//metodos privados
+	private void iniciarJuego()
+	{
+		//genera un nuevo tablero vacio
+		tablero = new int[tamanioTablero][tamanioTablero];
+		//avisa a los observadores que hay un nuevo tablero
+		crearTablero(tablero);
+		
+		//Genera las primeras dos celdas
+		
+		//Primeera celda
+		//obtiene una nueva celda para el inicio del juego
+		Celda nuevaCelda = obtenerNuevaCelda();
+		tablero[nuevaCelda.getY()][nuevaCelda.getX()] = nuevaCelda.getValor();
+		
+		//avisa a los observadores que hay un nuevo movimiento en el tablero
+		PasoMovimiento pasoNuevaCelda = new PasoMovimiento(nuevaCelda, nuevaCelda);
+		realizarPasoMovimiento(pasoNuevaCelda);
+		
+		//segunda celda
+		nuevaCelda = obtenerNuevaCelda();
+		tablero[nuevaCelda.getY()][nuevaCelda.getX()] = nuevaCelda.getValor();
+		
+		//avisa a los observadores que hay un nuevo movimiento en el tablero
+		pasoNuevaCelda = new PasoMovimiento(nuevaCelda, nuevaCelda);
+		realizarPasoMovimiento(pasoNuevaCelda);
+
+	}
+	
+	//obtener una nueva celda
+	private Celda obtenerNuevaCelda() {
+		final Random random = new Random();
+		
+		Celda celdaLibre = null;
+		
+		List<Integer> celdasLibres = obtenerCeldasLibres();
+		
+		if (celdasLibres.size() > 0) {
+			int index = random.nextInt(celdasLibres.size());
+			int nroCeldaLibre = celdasLibres.get(index);
+			int valor = obtenernuevoValorCelda();
+			celdaLibre = new Celda(nroCeldaLibre % this.tamanioTablero, nroCeldaLibre / this.tamanioTablero, valor);
+		}
+		return celdaLibre;
+	}
+	
+	private boolean celdaOcupada(int x, int y) {
+		return this.tablero[y][x] != 0;
+	}
+	
+	private boolean celdaVacia(int x, int y) {
+		return !celdaOcupada(x, y);
+	}
+	
+	/******************************************************
+	* Las celdas estan numeradas con la siguiente formula *
+	* nroCelda = coordenadaY*tamanioTablero+coordenadaX   *
+	* *****************************************************/
+	private List<Integer> obtenerCeldasLibres() {
+		List<Integer> celdasVacias = new ArrayList<Integer>();
+		for(int y = 0; y < this.tamanioTablero; y ++) {
+			for (int x = 0; x < this.tamanioTablero; x++) {
+				if (celdaVacia(x, y)) {
+					celdasVacias.add(y * this.tamanioTablero + x);
+				}
+			}
+		}
+		return celdasVacias;
+	}
+	
+	private int obtenernuevoValorCelda() {
+		final Random random = new Random();
+
+		//numero aleatorio entre 1 y 100
+		int numeroAleatorio = random.nextInt(100) + 1;
+
+        if (numeroAleatorio <= this.probabilidadDelDos) {
+            return 2;
+        } else {
+            return 4;
+        }
+	}
+	
+	private void moverArriba() {
+		//construye un vector por cada columna y la pasa al motor de movimiento
+		//recorriendo el tablero de IZQUEIRDA A DERECHA y DE ARRIBA HACIA ABAJO
+		//el primer elemento del vector es hacia donde se mueven las demas celdas
+		Celda[] columnaCeldas = null;
+		
+		for (int x = 0; x < this.tamanioTablero ; x++) {
+			columnaCeldas = new Celda[this.tamanioTablero];
+			for (int y = 0; y < this.tamanioTablero ; y--) {
+				columnaCeldas[y] = new Celda(x, y, this.tablero[y][x]);
+			}
+		}
+		realizarMovimientoEnFilaColumna(columnaCeldas);
+		
+		
+	}
+	
+	private void moverDerecha() {
+		
+	}
+	
+	private void moverAbajo() {
+		
+	}
+	 
+	private void moverIzquierda() {
+		
+	}
+	
+	/*
+	 * recorre el vector
+	 */
+	private void realizarMovimientoEnFilaColumna(Celda[] celdas) {
+		//trata de sumar la siguiente celda en la celda actua
+		for (i = 0; i < celdas.length - 1; i++ ) {
+			if (celdas[i].getValor() == 0) {
+				//es celda vacia, desplazar todo hacia adelante
+				desplazarCeldas(celdas, i);
+			}
+			else
+			{
+				//????????????????????????
+			}
+			
+			
+		}
+	}
+	
+	private void desplazarCeldas(Celda[] celdas, int IndiceDestino) {
+		for(int i = IndiceDestino; i < this.tamanioTablero -1; i++ ) {
+			PasoMovimiento paso;
+			paso = new PasoMovimiento(celdas[i + 1], celdas[0]);
+			realizarPasoMovimiento(paso);
+			this.tablero[celdas[i].getY()][celdas[i].getX()] = 0 this.tablero[celdas[i + 1].getY()][celdas[i + 1].getX()]
+			celdas[i] = celdas[i + 1];
+		}
+	}
+	
+	
+	
+	
+	/*********************************************
+	 * Metodos genericos de llamada a observador *
+	 *********************************************/
+	// Ejecutar una acción en todos los observadores utilizando reflection
+    public void ejecutarEnObservadores(String nombreMetodo, Object... args) {
+        for (IObservadorMotorJuego observador : observadores) {
+            try {
+                Method metodo = IObservadorMotorJuego.class.getMethod(nombreMetodo, obtenerTiposArgumentos(args));
+                metodo.invoke(observador, args);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Obtener los tipos de los argumentos
+    private Class<?>[] obtenerTiposArgumentos(Object... args) {
+        Class<?>[] tipos = new Class[args.length];
+        for (int i = 0; i < args.length; i++) {
+            tipos[i] = args[i].getClass();
+        }
+        return tipos;
+    }
+
+    // Ejecutar una acción en todos los observadores
+    public void ejecutarEnObservadores(AccionObservadorMotor accion) {
+        for (IObservadorMotorJuego observador : observadores) {
+            accion.ejecutar(observador);
+        }
+    }
+    
+ // Crear tablero en todos los observadores
+    public void crearTablero(int[][] tablero) {
+        ejecutarEnObservadores(observador -> observador.CrearTablero(tablero));
+    }
+
+    // Realizar paso de movimiento en todos los observadores
+    public void realizarPasoMovimiento(PasoMovimiento movimiento) {
+        ejecutarEnObservadores(observador -> observador.RealizarPasoMovimiento(movimiento));
+    }
+
+    // Actualizar puntos en todos los observadores
+    public void actualizarPuntos(int puntos) {
+        ejecutarEnObservadores(observador -> observador.ActualizarPuntos(puntos));
+    }
+
+    // Indicar que se perdio en todos los observadores
+    public void perdio() {
+        ejecutarEnObservadores(observador -> observador.Perdio());
+    }
+
+    // Indicar que se gano en todos los observadores
+    public void gano() {
+        ejecutarEnObservadores(observador -> observador.Gano());
+    }
+
+}
+

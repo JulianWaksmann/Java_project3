@@ -1,0 +1,15 @@
+package TP1_2048;
+
+public class ResultadoMovimiento {
+	boolean hayMovimiento;
+	int puntaje;
+	
+	
+	public ResultadoMovimiento(boolean hayMOvimiento, int puntaje) {
+		this.hayMovimiento = hayMOvimiento;
+		this.puntaje = puntaje;
+	}
+	
+	
+
+}

@@ -1,0 +1,11 @@
+package TP1_2048;
+
+public interface IMotorJuego {
+	
+	void NuevoJuego(int tamanioTablero);
+	void Mover(Direccion direccion);
+	void AgregarObservador(IObservadorJuego observador);
+	void RemoverObservador(IObservadorJuego observador);
+	
+
+}

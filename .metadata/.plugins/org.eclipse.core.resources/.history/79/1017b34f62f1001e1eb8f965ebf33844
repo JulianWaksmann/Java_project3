@@ -1,0 +1,7 @@
+package TP1_2048;
+
+public class Celda {
+	int x;
+	int y;
+	int valor;
+}

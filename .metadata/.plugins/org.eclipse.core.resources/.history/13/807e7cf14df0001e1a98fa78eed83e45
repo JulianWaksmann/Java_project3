@@ -1,0 +1,50 @@
+package TP1_2048;
+
+import java.awt.EventQueue;
+import java.awt.Image;
+
+import javax.swing.JFrame;
+import java.awt.Toolkit;
+import java.net.URL;
+
+public class VentanaJuego {
+
+	private JFrame frame;
+
+	/**
+	 * Launch the application.
+	 */
+	public static void main(String[] args) {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				try {
+					VentanaJuego window = new VentanaJuego();
+					window.frame.setVisible(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+	}
+
+	/**
+	 * Create the application.
+	 */
+	public VentanaJuego() {
+		initialize();
+	}
+
+	/**
+	 * Initialize the contents of the frame.
+	 */
+	private void initialize() {
+		URL pp = VentanaJuego.class.getResource("/TP1_2048/2048.ico");
+		frame = new JFrame();
+		Image x = frame.getIconImage();
+		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(VentanaJuego.class.getResource("/TP1_2048/2048.ico")));
+		frame.setTitle("2048");
+		frame.setBounds(100, 100, 867, 510);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	}
+
+}

@@ -1,0 +1,247 @@
+package TP1_2048;
+
+import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.Image;
+
+import javax.swing.*;
+import java.awt.Toolkit;
+import java.net.URL;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JButton;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
+import javax.swing.JTextArea;
+import java.awt.Font;
+
+//Interfaz funcional para representar el método a ejecutar en los observadores
+@FunctionalInterface
+interface AccionObservadorUI {
+void ejecutar(IObservadorUIJuego observador);
+}
+
+public class UIJuegoGrafico implements IUIJuego, IObservadorMotorJuego{
+	private List<IObservadorUIJuego> observadores;
+	private JFrame frame;
+	private JTextArea txtConsola;
+	
+	
+	private int[][] tablero;
+	
+
+	/**
+	 * Launch the application.
+	 */
+//	public static void main(String[] args) {
+//		EventQueue.invokeLater(new Runnable() {
+//			public void run() {
+//				try {
+//					UIJuegoGrafico window = new UIJuegoGrafico();
+//					window.frame.setVisible(true);
+//				} catch (Exception e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		});
+//	}
+	
+	public JFrame getFrame() {
+        return frame;
+    }
+
+	/**
+	 * Create the application.
+	 */
+	public UIJuegoGrafico() {
+		observadores = new ArrayList<IObservadorUIJuego>();
+		initialize();
+	}
+
+	/**
+	 * Initialize the contents of the frame.
+	 */
+	private void initialize() {
+		frame = new JFrame();
+		frame.setIconImage(Toolkit.getDefaultToolkit().getImage(UIJuegoGrafico.class.getResource("/TP1_2048/2048.gif")));
+		frame.setTitle("2048");
+		frame.setBounds(100, 100, 867, 510);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.getContentPane().setLayout(null);
+		
+		JButton btnNuevoJuego = new JButton("NuevoJuego");
+		btnNuevoJuego.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				btnNevoJuegoActionPerformed(e);
+			}
+		});
+		btnNuevoJuego.setBounds(25, 26, 109, 23);
+		frame.getContentPane().add(btnNuevoJuego);
+		
+		JButton btnArriba = new JButton("Arriba");
+		btnArriba.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				movimientoPerformed(e, Direccion.ARRIBA);
+			}
+		});
+		btnArriba.setBounds(211, 26, 89, 23);
+		frame.getContentPane().add(btnArriba);
+		
+		JButton btnAbajo = new JButton("Abajo");
+		btnAbajo.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				movimientoPerformed(e, Direccion.ABAJO);
+			}
+		});
+		btnAbajo.setBounds(211, 127, 89, 23);
+		frame.getContentPane().add(btnAbajo);
+		
+		JButton btnIzquierda = new JButton("Izquierda");
+		btnIzquierda.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				movimientoPerformed(e, Direccion.IZQUIERDA);
+			}
+		});
+
+		btnIzquierda.setBounds(111, 77, 89, 23);
+		frame.getContentPane().add(btnIzquierda);
+		
+		JButton btnDerecha = new JButton("Derecha");
+		btnDerecha.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				movimientoPerformed(e, Direccion.DERECHA);
+			}
+		});
+
+		btnDerecha.setBounds(306, 77, 89, 23);
+		frame.getContentPane().add(btnDerecha);
+		
+		FichaPanel fichaPanel = new FichaPanel();
+		fichaPanel.setBounds(500,77, 100, 100);
+		Font courierNewBold = new Font("Courier New", Font.BOLD, 20);
+		fichaPanel.setText("2048", Color.BLUE, Color.RED, courierNewBold, 1);
+		frame.getContentPane().add(fichaPanel);
+		
+		
+		txtConsola = new JTextArea();
+		txtConsola.setFont(new Font("Lucida Console", Font.PLAIN, 13));
+	    JScrollPane scrollPane = new JScrollPane(txtConsola, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+	    scrollPane.setBounds(25, 186, 816, 274);
+	    frame.getContentPane().add(scrollPane);
+	}
+
+	@Override
+	public void AgregarObservador(IObservadorUIJuego observador) {
+		observadores.add(observador);		
+	}
+
+	@Override
+	public void RemoverObservador(IObservadorUIJuego observador) {
+		observadores.remove(observador);		
+	}
+	
+	
+	/*********************************************
+	 * Metodos genericos de llamada a observador *
+	 *********************************************/
+	// Ejecutar una acción en todos los observadores utilizando reflection
+    public void ejecutarEnObservadores(String nombreMetodo, Object... args) {
+        for (IObservadorUIJuego observador : observadores) {
+            try {
+                Method metodo = IObservadorMotorJuego.class.getMethod(nombreMetodo, obtenerTiposArgumentos(args));
+                metodo.invoke(observador, args);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    // Obtener los tipos de los argumentos
+    private Class<?>[] obtenerTiposArgumentos(Object... args) {
+        Class<?>[] tipos = new Class[args.length];
+        for (int i = 0; i < args.length; i++) {
+            tipos[i] = args[i].getClass();
+        }
+        return tipos;
+    }
+
+    // Ejecutar una acción en todos los observadores
+    public void ejecutarEnObservadores(AccionObservadorUI accion) {
+        for (IObservadorUIJuego observador : observadores) {
+            accion.ejecutar(observador);
+        }
+    }
+    
+    private void NuevoJuego(int tamanioTablero, int probabilidadDelDos) {
+		 ejecutarEnObservadores(observador -> observador.NuevoJuego(tamanioTablero, probabilidadDelDos));
+	}
+	
+	private void Mover(Direccion direccion) {
+		 ejecutarEnObservadores(observador -> observador.Mover(direccion));
+	}
+
+	@Override
+	public void CrearTablero(int[][] tablero) {
+		this.tablero= new int[tablero.length][tablero.length];
+		for(int y = 0; y < tablero.length; y++) {
+			for (int x =0; x < tablero.length; x ++) {
+				this.tablero[y][x] = tablero[y][x];
+			}
+		}
+		imprimirTablero(this.tablero);
+	}
+
+	@Override
+	public void RealizarPasoMovimiento(PasoMovimiento movimiento) {
+		this.tablero[movimiento.getDestino().getY()][movimiento.getDestino().getX()] = movimiento.getOrigen().getValor(); 
+		imprimirTablero(this.tablero);
+	}
+
+	@Override
+	public void ActualizarPuntos(int puntos) {
+		txtConsola.append("puntos Jugador: " + puntos + "\r\n\r\n");
+	}
+
+	@Override
+	public void Perdio() {
+		txtConsola.append("Jugador: PERDIO \r\n\r\n");
+	}
+
+	@Override
+	public void Gano() {
+		txtConsola.append("Jugador: GANO \r\n\r\n");
+	}
+	
+	
+	
+	
+	/************************************************************/
+	public void btnNevoJuegoActionPerformed(ActionEvent e) {
+		NuevoJuego(4, 90);
+	}
+	
+	public void  movimientoPerformed(ActionEvent e, Direccion direccion) {
+		Mover(direccion);
+	}
+	
+	
+	private void imprimirTablero(int[][] tablero) {
+		
+		StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < tablero.length; i++) {
+            sb.append("+----");
+        }
+        sb.append("+\r\n");
+        String separador = sb.toString();
+		
+		for(int y = 0; y < tablero.length; y++) {
+			txtConsola.append(separador);
+			for (int x =0; x < tablero.length; x ++) {
+				txtConsola.append("|" + String.format("%4d", tablero[y][x]));
+			}
+			txtConsola.append("|\r\n");
+		}
+		txtConsola.append(separador + "\r\n\r\n");
+	}
+}

@@ -1,0 +1,102 @@
+package TP1_2048;
+
+
+import javax.swing.*;
+import java.awt.*;
+import java.util.Timer;
+import java.util.TimerTask;
+
+public class Odometer extends JPanel {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private int numberOfDigits;
+    private int[] currentValues;
+    private int[] targetValues;
+    private Timer timer;
+    private int animationSpeed;
+    private int[] digitOffsets;
+
+    public Odometer(int numberOfDigits, int animationSpeed) {
+        this.numberOfDigits = numberOfDigits;
+        this.animationSpeed = animationSpeed;
+        this.currentValues = new int[numberOfDigits];
+        this.targetValues = new int[numberOfDigits];
+        this.digitOffsets = new int[numberOfDigits];
+
+        setLayout(new GridLayout(1, numberOfDigits));
+        for (int i = 0; i < numberOfDigits; i++) {
+            digitOffsets[i] = 0;
+            DigitPanel digitPanel = new DigitPanel();
+            add(digitPanel);
+        }
+
+        timer = new Timer();
+        timer.scheduleAtFixedRate(new OdometerTask(), 0, animationSpeed);
+    }
+
+    public void setValue(int value) {
+        String strValue = String.valueOf(value);
+        int length = strValue.length();
+
+        for (int i = 0; i < numberOfDigits; i++) {
+            if (numberOfDigits - i <= length) {
+                targetValues[i] = Character.getNumericValue(strValue.charAt(length - numberOfDigits + i));
+            } else {
+                targetValues[i] = 0;
+            }
+        }
+    }
+
+    private class OdometerTask extends TimerTask {
+        @Override
+        public void run() {
+            for (int i = 0; i < numberOfDigits; i++) {
+                if (currentValues[i] != targetValues[i]) {
+                    if (currentValues[i] < 9) {
+                        currentValues[i]++;
+                    } else {
+                        currentValues[i] = 0;
+                    }
+                }
+            }
+            repaint();
+        }
+    }
+
+    private class DigitPanel extends JPanel {
+        /**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		private final int width = 40;
+        private final int height = 60;
+
+        public DigitPanel() {
+            setPreferredSize(new Dimension(width, height));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2d = (Graphics2D) g.create();
+
+            int digit = getParent().getComponentZOrder(this);
+            int value = currentValues[digit];
+
+            // Clear background
+            g2d.setColor(Color.BLACK);
+            g2d.fillRect(0, 0, width, height);
+
+            // Draw current value
+            g2d.setColor(Color.WHITE);
+            g2d.setFont(new Font("Arial", Font.BOLD, 40));
+            g2d.drawString(String.valueOf(value), 10, 45 - digitOffsets[digit]);
+
+            g2d.dispose();
+        }
+    }
+
+    
+}

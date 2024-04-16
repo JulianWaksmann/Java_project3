@@ -1,0 +1,47 @@
+package TP1_2048;
+
+import javax.sound.sampled.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class SoundPlayer {
+    // Lista para mantener los clips cargados
+    private static List<Clip> clipList = new ArrayList<>();
+    private static HashMap<String, Clip> =  new hashmap<String, Clip>();
+    
+
+    // Método para cargar un Clip y agregarlo a la lista
+    public static void addClip(String resourceName) {
+        try {
+            // Cargar el archivo de sonido desde el recurso de la aplicación
+            AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(SoundPlayer.class.getResourceAsStream(resourceName));
+
+            // Obtener el formato del audio
+            AudioFormat format = audioInputStream.getFormat();
+
+            // Crear un DataLine.Info para reproducir el audio
+            DataLine.Info info = new DataLine.Info(Clip.class, format);
+
+            // Obtener el Clip y abrirlo
+            Clip clip = (Clip) AudioSystem.getLine(info);
+            clip.open(audioInputStream);
+
+            // Agregar el Clip a la lista
+            clipList.add(clip);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Método para reproducir un Clip de la lista por su índice
+    public static void playClip(int index) {
+        if (index >= 0 && index < clipList.size()) {
+            Clip clip = clipList.get(index);
+            if (clip != null) {
+                clip.setFramePosition(0); // Reiniciar la posición del clip
+                clip.start(); // Iniciar la reproducción
+            }
+        }
+    }
+}
+
